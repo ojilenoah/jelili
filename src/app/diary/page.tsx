@@ -9,6 +9,12 @@ import { supabase } from '@/lib/supabase-client';
 export default function DiaryPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This ensures that any client-side-only logic runs after the component has mounted.
+    setIsClient(true);
+  }, []);
 
   // This function adds a new message, preventing duplicates.
   const handleNewMessage = useCallback((newMessage: Message) => {
@@ -73,7 +79,7 @@ export default function DiaryPage() {
   return (
     <div className="flex min-h-screen w-full flex-col items-center gap-8 p-4 md:p-8 font-body text-foreground">
       <div className="w-full max-w-5xl">
-        {loading && messages.length === 0 ? (
+        {(loading && messages.length === 0) || !isClient ? (
           <Skeleton className="h-[200px] w-full rounded-lg" />
         ) : (
           <ContributionGraph messages={processedMessages} />
