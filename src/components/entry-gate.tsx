@@ -52,12 +52,12 @@ export default function EntryGate({ unlocked, onUnlock, hidden }: EntryGateProps
     >
       <div className="flex flex-col items-center gap-6 p-8 rounded-lg">
         <h1 className="font-headline text-3xl md:text-5xl text-primary drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)]">
-          Who are you?
+          Name of a fruit 😉
         </h1>
         <div className="flex w-full max-w-sm items-center space-x-2">
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="It's a secret..."
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value)
