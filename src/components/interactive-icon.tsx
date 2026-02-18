@@ -22,7 +22,7 @@ export default function InteractiveIcon({ note, onClick }: InteractiveIconProps)
           <button
             onClick={onClick}
             className={cn(
-              'absolute text-primary/70 hover:text-primary transition-colors duration-300'
+              'absolute text-primary/70 hover:text-primary transition-colors duration-300 text-5xl'
             )}
             style={{
               top: note.position.top,
@@ -31,7 +31,7 @@ export default function InteractiveIcon({ note, onClick }: InteractiveIconProps)
             }}
             aria-label={`Open note ${note.id}`}
           >
-            <note.Icon style={{ width: note.size, height: note.size }} />
+            <note.Icon />
           </button>
         </TooltipTrigger>
         <TooltipContent className="frosted-glass border-primary/10 text-primary">
