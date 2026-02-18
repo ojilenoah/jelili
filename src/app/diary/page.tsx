@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Message } from '@/lib/types';
 import ContributionGraph from '@/components/diary/contribution-graph';
 import ChatView from '@/components/diary/chat-view';
@@ -9,6 +9,16 @@ import { supabase } from '@/lib/supabase-client';
 export default function DiaryPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // This function adds a new message, preventing duplicates.
+  const handleNewMessage = useCallback((newMessage: Message) => {
+    setMessages((prevMessages) => {
+      if (prevMessages.some((m) => m.id === newMessage.id)) {
+        return prevMessages;
+      }
+      return [...prevMessages, newMessage];
+    });
+  }, []);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -35,12 +45,12 @@ export default function DiaryPage() {
     fetchMessages();
 
     const channel = supabase
-      .channel('messages')
+      .channel('messages-realtime')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
-          setMessages((prevMessages) => [...prevMessages, payload.new as Message]);
+          handleNewMessage(payload.new as Message);
         }
       )
       .subscribe();
@@ -48,13 +58,15 @@ export default function DiaryPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [handleNewMessage]);
 
   const processedMessages = useMemo(() => {
-    return messages.map(m => ({
-      ...m,
-      createdAt: new Date(m.created_at)
-    })) || [];
+    return messages
+      .map((m) => ({
+        ...m,
+        createdAt: new Date(m.created_at),
+      }))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }, [messages]);
 
 
@@ -71,7 +83,7 @@ export default function DiaryPage() {
         {loading && messages.length === 0 ? (
           <Skeleton className="h-[500px] w-full rounded-lg" />
         ) : (
-          <ChatView messages={processedMessages} />
+          <ChatView messages={processedMessages} onNewMessage={handleNewMessage} />
         )}
       </div>
     </div>

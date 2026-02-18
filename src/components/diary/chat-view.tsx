@@ -12,9 +12,10 @@ import { supabase } from '@/lib/supabase-client';
 
 interface ChatViewProps {
   messages: (Message & { createdAt: Date })[];
+  onNewMessage: (message: Message) => void;
 }
 
-export default function ChatView({ messages }: ChatViewProps) {
+export default function ChatView({ messages, onNewMessage }: ChatViewProps) {
   const { sender } = useSender();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -23,20 +24,27 @@ export default function ChatView({ messages }: ChatViewProps) {
     e.preventDefault();
     if (newMessage.trim() === '' || !sender) return;
 
+    const text = newMessage;
+    setNewMessage(''); // Optimistically clear
+
     try {
-      const { error } = await supabase.from('messages').insert([
-        {
-          text: newMessage,
-          sender: sender,
-        },
-      ]);
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{ text, sender }])
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
-      setNewMessage('');
+      
+      if (data) {
+        onNewMessage(data as Message); // Optimistically update UI
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
+      setNewMessage(text); // Put message back on error
     }
   };
 
