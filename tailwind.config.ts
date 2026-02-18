@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'var(--font-inter)', 'sans-serif'],
+        body: ['JetBrains Mono', 'var(--font-jetbrains-mono)', 'monospace'],
         headline: ['Space Grotesk', 'var(--font-space-grotesk)', 'sans-serif'],
-        code: ['monospace'],
+        code: ['JetBrains Mono', 'var(--font-jetbrains-mono)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',

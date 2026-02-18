@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, FileText, BookHeart } from 'lucide-react';
+import { Home, BookHeart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -13,7 +13,6 @@ import {
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
-  { href: '/proposal', icon: FileText, label: 'Proposal' },
   { href: '/diary', icon: BookHeart, label: 'Diary' },
 ];
 

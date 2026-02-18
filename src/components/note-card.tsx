@@ -1,8 +1,11 @@
+"use client";
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Note } from '@/lib/notes';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 interface NoteCardProps {
   note: Note;
@@ -10,6 +13,26 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, onClose }: NoteCardProps) {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    if (note) {
+      setIsTyping(true);
+      setDisplayedText('');
+      let i = 0;
+      const timer = setInterval(() => {
+        setDisplayedText(note.text.slice(0, i));
+        i++;
+        if (i > note.text.length) {
+          clearInterval(timer);
+          setIsTyping(false);
+        }
+      }, 30); // typing speed
+      return () => clearInterval(timer);
+    }
+  }, [note]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-card-in"
@@ -23,7 +46,10 @@ export default function NoteCard({ note, onClose }: NoteCardProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <CardContent className="p-0">
-          <p className="text-xl leading-relaxed text-primary font-body">{note.text}</p>
+          <p className="text-lg md:text-xl leading-relaxed text-primary font-body min-h-[12rem] whitespace-pre-wrap">
+            {displayedText}
+            {isTyping && <span className="blinking-cursor">|</span>}
+          </p>
         </CardContent>
         <Button
           variant="ghost"
