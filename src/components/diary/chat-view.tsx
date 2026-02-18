@@ -65,8 +65,8 @@ export default function ChatView({ messages, onNewMessage }: ChatViewProps) {
             <div
               key={message.id}
               className={cn('flex flex-col', {
-                'items-end': message.sender === 'Noah',
-                'items-start': message.sender === 'Jelili',
+                'items-end': message.sender === sender,
+                'items-start': message.sender !== sender,
               })}
             >
               <div

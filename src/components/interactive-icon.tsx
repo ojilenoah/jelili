@@ -22,7 +22,7 @@ export default function InteractiveIcon({ note, onClick }: InteractiveIconProps)
           <button
             onClick={onClick}
             className={cn(
-              'absolute text-primary/70 hover:text-primary transition-colors duration-300 text-5xl'
+              'absolute text-primary/70 hover:text-primary transition-colors duration-300 text-4xl'
             )}
             style={{
               top: note.position.top,
