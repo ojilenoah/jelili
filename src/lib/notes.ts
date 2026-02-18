@@ -19,26 +19,31 @@ const noteColors = [
 const fruitIcons = ['🍓', '🍇', '🍉', '🍊', '🍋', '🍌', '🍍', '🍎', '🍏', '🍐', '🍑', '🍒', '🥝', '🥑', '🥥', '🥭', '🫐', '🍈', '🍓', '🍇'];
 
 const positions = [
-    { top: '8%', left: '10%' },
-    { top: '10%', left: '90%' },
-    { top: '92%', left: '8%' },
-    { top: '90%', left: '92%' },
-    { top: '25%', left: '6%' },
-    { top: '28%', left: '94%' },
-    { top: '75%', left: '5%' },
-    { top: '72%', left: '95%' },
+    // Corners
+    { top: '2%', left: '5%' },
+    { top: '3%', left: '95%' },
+    { top: '98%', left: '8%' },
+    { top: '97%', left: '92%' },
+    // Top edge
     { top: '5%', left: '30%' },
     { top: '6%', left: '70%' },
+    { top: '4%', left: '50%' },
+    // Bottom edge
     { top: '95%', left: '33%' },
     { top: '94%', left: '67%' },
-    { top: '50%', left: '4%' },
-    { top: '48%', left: '96%' },
-    { top: '4%', left: '50%' },
     { top: '96%', left: '50%' },
-    { top: '15%', left: '22%' },
-    { top: '18%', left: '78%' },
-    { top: '85%', left: '25%' },
-    { top: '82%', left: '75%' },
+    // Left edge
+    { top: '25%', left: '4%' },
+    { top: '75%', left: '3%' },
+    { top: '50%', left: '2%' },
+    { top: '15%', left: '6%' },
+    { top: '85%', left: '5%' },
+    // Right edge
+    { top: '28%', left: '96%' },
+    { top: '72%', left: '95%' },
+    { top: '48%', left: '97%' },
+    { top: '18%', left: '94%' },
+    { top: '82%', left: '93%' },
 ];
 
 export const notes: Note[] = [

@@ -15,7 +15,7 @@ export default function MainPageContent() {
     <div className="relative h-screen w-screen flex items-center justify-center p-4">
       <div
         className={cn(
-          "transition-all duration-500 w-full h-full",
+          "relative w-full max-w-2xl transition-all duration-500",
           activeNote ? 'scale-95 opacity-50 blur-sm' : 'scale-100 opacity-100 blur-0'
         )}
       >

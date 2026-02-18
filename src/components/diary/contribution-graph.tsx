@@ -93,29 +93,31 @@ export default function ContributionGraph({ messages }: ContributionGraphProps) 
 
   return (
     <div className="w-full rounded-lg border border-border/50 bg-white/30 p-4 frosted-glass">
-      <div className="grid grid-cols-53 grid-rows-7 grid-flow-col gap-1">
-        <TooltipProvider>
-          {contributionData.map((day, index) => (
-            <Tooltip key={index} delayDuration={100}>
-              <TooltipTrigger asChild>
-                <div
-                  className={cn(
-                    'aspect-square w-full rounded-sm',
-                    { 'bg-neutral-200/50': day.state === 'none' || day.state === 'empty' },
-                    { 'bg-deep-red/60': day.state === 'Noah' },
-                    { 'bg-mint-green/60': day.state === 'Jelili' },
-                    { 'bg-soft-purple': day.state === 'both' }
-                  )}
-                />
-              </TooltipTrigger>
-              {day.state !== 'empty' && (
-                <TooltipContent className="frosted-glass border-primary/10 text-primary transition-all duration-300 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
-                  <p>{getTooltipText(day)}</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          ))}
-        </TooltipProvider>
+      <div className="overflow-x-auto">
+        <div className="grid grid-cols-53 grid-rows-7 grid-flow-col gap-1 min-w-[700px]">
+          <TooltipProvider>
+            {contributionData.map((day, index) => (
+              <Tooltip key={index} delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      'aspect-square w-full rounded-sm',
+                      { 'bg-neutral-200/50': day.state === 'none' || day.state === 'empty' },
+                      { 'bg-deep-red/60': day.state === 'Noah' },
+                      { 'bg-mint-green/60': day.state === 'Jelili' },
+                      { 'bg-soft-purple': day.state === 'both' }
+                    )}
+                  />
+                </TooltipTrigger>
+                {day.state !== 'empty' && (
+                  <TooltipContent className="frosted-glass border-primary/10 text-primary transition-all duration-300 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
+                    <p>{getTooltipText(day)}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </TooltipProvider>
+        </div>
       </div>
       <div className="mt-4 flex items-center justify-start gap-4 px-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
