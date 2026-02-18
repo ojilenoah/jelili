@@ -31,7 +31,7 @@ export default function InteractiveIcon({ note, onClick }: InteractiveIconProps)
             }}
             aria-label={`Open note ${note.id}`}
           >
-            <note.Icon />
+            {note.Icon}
           </button>
         </TooltipTrigger>
         <TooltipContent className="frosted-glass border-primary/10 text-primary">
