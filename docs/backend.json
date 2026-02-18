@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "message": {
+      "title": "Message",
+      "description": "A message in the love journal.",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "sender": {
+          "type": "string",
+          "description": "The sender of the message.",
+          "enum": ["Noah", "Jelili"]
+        },
+        "createdAt": {
+          "type": "object",
+          "description": "The timestamp when the message was created."
+        }
+      },
+      "required": ["text", "sender", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/messages": {
+      "schema": {
+        "$ref": "#/backend/entities/message"
+      },
+      "description": "Collection of all messages in the love journal."
+    }
+  }
+}

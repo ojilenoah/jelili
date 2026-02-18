@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
     extend: {
+      gridTemplateColumns: {
+        '53': 'repeat(53, minmax(0, 1fr))',
+      },
       fontFamily: {
         body: ['JetBrains Mono', 'var(--font-jetbrains-mono)', 'monospace'],
         headline: ['Space Grotesk', 'var(--font-space-grotesk)', 'sans-serif'],
@@ -48,6 +51,9 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        'deep-red': 'hsl(var(--deep-red-hsl))',
+        'mint-green': 'hsl(var(--mint-green-hsl))',
+        'soft-purple': 'hsl(var(--soft-purple-hsl))',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',
