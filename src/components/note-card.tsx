@@ -40,7 +40,7 @@ export default function NoteCard({ note, onClose }: NoteCardProps) {
     >
       <Card
         className={cn(
-          "frosted-glass relative w-11/12 max-w-md p-6 border-primary/10 shadow-2xl rounded-2xl soft-glow",
+          "frosted-glass relative w-11/12 max-w-lg p-6 border-primary/10 shadow-2xl rounded-2xl soft-glow",
           note.color
         )}
         onClick={(e) => e.stopPropagation()}
