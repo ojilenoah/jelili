@@ -3,7 +3,6 @@ import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { AppInitializer } from '@/app/app-initializer';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase';
 import { SenderProvider } from '@/context/sender-context';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -34,14 +33,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${jetbrainsMono.variable} ${spaceGrotesk.variable} font-body antialiased bg-background text-foreground`}>
-        <FirebaseClientProvider>
-          <SenderProvider>
-            <AppInitializer>
-              {children}
-            </AppInitializer>
-          </SenderProvider>
-          <Toaster />
-        </FirebaseClientProvider>
+        <SenderProvider>
+          <AppInitializer>
+            {children}
+          </AppInitializer>
+        </SenderProvider>
+        <Toaster />
       </body>
     </html>
   );

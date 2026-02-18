@@ -7,31 +7,33 @@ import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useSender } from '@/context/sender-context';
+import { supabase } from '@/lib/supabase-client';
 
 interface ChatViewProps {
-  messages: (Omit<Message, 'createdAt'> & { createdAt: Date })[];
+  messages: (Message & { createdAt: Date })[];
 }
 
 export default function ChatView({ messages }: ChatViewProps) {
-  const firestore = useFirestore();
   const { sender } = useSender();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !firestore || !sender) return;
+    if (newMessage.trim() === '' || !sender) return;
 
-    const messagesCollection = collection(firestore, 'messages');
     try {
-      await addDoc(messagesCollection, {
-        text: newMessage,
-        sender: sender,
-        createdAt: serverTimestamp(),
-      });
+      const { error } = await supabase.from('messages').insert([
+        {
+          text: newMessage,
+          sender: sender,
+        },
+      ]);
+
+      if (error) {
+        throw error;
+      }
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);

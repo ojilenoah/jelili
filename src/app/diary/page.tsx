@@ -1,37 +1,59 @@
 'use client';
-import { useMemo } from 'react';
-import { useFirestore } from '@/firebase';
-import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useState, useEffect, useMemo } from 'react';
 import { Message } from '@/lib/types';
 import ContributionGraph from '@/components/diary/contribution-graph';
 import ChatView from '@/components/diary/chat-view';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/lib/supabase-client';
 
 export default function DiaryPage() {
-  const firestore = useFirestore();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const messagesQuery = useMemo(() => {
-    if (!firestore) return null;
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setLoading(true);
+      const currentYear = new Date().getFullYear();
+      const startOfYear = new Date(currentYear, 0, 1).toISOString();
+      const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59).toISOString();
 
-    const currentYear = new Date().getFullYear();
-    const startOfYear = new Date(currentYear, 0, 1);
-    const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .gte('created_at', startOfYear)
+        .lte('created_at', endOfYear)
+        .order('created_at', { ascending: true });
 
-    return query(
-      collection(firestore, 'messages'),
-      where('createdAt', '>=', Timestamp.fromDate(startOfYear)),
-      where('createdAt', '<=', Timestamp.fromDate(endOfYear)),
-      orderBy('createdAt', 'asc')
-    );
-  }, [firestore]);
+      if (error) {
+        console.error('Error fetching messages:', error);
+      } else {
+        setMessages(data || []);
+      }
+      setLoading(false);
+    };
 
-  const { data: messages, loading } = useCollection<Message>(messagesQuery);
+    fetchMessages();
+
+    const channel = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          setMessages((prevMessages) => [...prevMessages, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const processedMessages = useMemo(() => {
-    return messages?.map(m => ({
+    return messages.map(m => ({
       ...m,
-      createdAt: m.createdAt?.toDate()
+      createdAt: new Date(m.created_at)
     })) || [];
   }, [messages]);
 
@@ -39,14 +61,14 @@ export default function DiaryPage() {
   return (
     <div className="flex min-h-screen w-full flex-col items-center gap-8 p-4 md:p-8 font-body text-foreground">
       <div className="w-full max-w-5xl">
-        {loading ? (
+        {loading && messages.length === 0 ? (
           <Skeleton className="h-[200px] w-full rounded-lg" />
         ) : (
           <ContributionGraph messages={processedMessages} />
         )}
       </div>
       <div className="w-full max-w-5xl flex-1">
-        {loading ? (
+        {loading && messages.length === 0 ? (
           <Skeleton className="h-[500px] w-full rounded-lg" />
         ) : (
           <ChatView messages={processedMessages} />
