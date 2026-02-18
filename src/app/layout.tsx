@@ -4,6 +4,7 @@ import './globals.css';
 import { AppInitializer } from '@/app/app-initializer';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { SenderProvider } from '@/context/sender-context';
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -34,9 +35,11 @@ export default function RootLayout({
       </head>
       <body className={`${jetbrainsMono.variable} ${spaceGrotesk.variable} font-body antialiased bg-background text-foreground`}>
         <FirebaseClientProvider>
-          <AppInitializer>
-            {children}
-          </AppInitializer>
+          <SenderProvider>
+            <AppInitializer>
+              {children}
+            </AppInitializer>
+          </SenderProvider>
           <Toaster />
         </FirebaseClientProvider>
       </body>

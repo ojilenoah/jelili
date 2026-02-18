@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface EntryGateProps {
   unlocked: boolean;
-  onUnlock: () => void;
+  onUnlock: (sender: 'Noah' | 'Jelili') => void;
   hidden: boolean;
 }
 
@@ -18,13 +18,17 @@ export default function EntryGate({ unlocked, onUnlock, hidden }: EntryGateProps
   const { toast } = useToast();
 
   const handleCheck = () => {
-    if (inputValue.toLowerCase() === 'ebelebo') {
+    const lowerCaseInput = inputValue.toLowerCase();
+    if (lowerCaseInput === 'ebelebo') {
       setError(false);
-      onUnlock();
+      onUnlock('Jelili');
+    } else if (lowerCaseInput === 'constantine') {
+      setError(false);
+      onUnlock('Noah');
     } else {
       setError(true);
       toast({
-        title: "Incorrect Fruit",
+        title: "Incorrect Password",
         description: "That's not the one. Try again.",
         variant: "destructive",
       });
@@ -48,12 +52,12 @@ export default function EntryGate({ unlocked, onUnlock, hidden }: EntryGateProps
     >
       <div className="flex flex-col items-center gap-6 p-8 rounded-lg">
         <h1 className="font-headline text-3xl md:text-5xl text-primary drop-shadow-[0_1px_1px_rgba(0,0,0,0.1)]">
-          What’s the fruit?
+          Who are you?
         </h1>
         <div className="flex w-full max-w-sm items-center space-x-2">
           <Input
-            type="text"
-            placeholder="e.g., apple"
+            type="password"
+            placeholder="Password"
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value)

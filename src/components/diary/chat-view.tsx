@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useSender } from '@/context/sender-context';
 
 interface ChatViewProps {
   messages: (Omit<Message, 'createdAt'> & { createdAt: Date })[];
@@ -16,15 +17,13 @@ interface ChatViewProps {
 
 export default function ChatView({ messages }: ChatViewProps) {
   const firestore = useFirestore();
+  const { sender } = useSender();
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !firestore) return;
-
-    // For now, let's assume 'Noah' is sending. This would be replaced by auth user.
-    const sender: 'Noah' | 'Jelili' = 'Noah'; 
+    if (newMessage.trim() === '' || !firestore || !sender) return;
 
     const messagesCollection = collection(firestore, 'messages');
     try {
@@ -88,11 +87,13 @@ export default function ChatView({ messages }: ChatViewProps) {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Write something for today..."
             className="flex-1 rounded-full bg-white/50 focus:ring-mint-green/50 focus:ring-2 transition-shadow"
+            disabled={!sender}
           />
           <Button
             type="submit"
             size="icon"
             className="rounded-full bg-mint-green text-white shadow-lg hover:scale-105 hover:shadow-mint-green/30 transition-all"
+            disabled={!sender}
           >
             <Send className="h-4 w-4" />
           </Button>
