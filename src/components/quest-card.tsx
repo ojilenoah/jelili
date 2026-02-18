@@ -10,13 +10,13 @@ export default function QuestCard() {
           <p className="font-headline text-lg text-primary/90 mb-4">To my Jelili,</p>
           <div className="space-y-4 text-base md:text-lg leading-relaxed font-body">
             <p>
-              they say life is a series of connections, but ours feels more like two boomerangs that can’t help but return back to each other. It started with the secret name we gave ourselves, Jellii & Labubu, a language only we understood while the rest of the group was just noise.
+              they say life is a series of connections, but ours feels more like two boomerangs that can’t help but <strong className="text-primary/95">return back to each other</strong>. It started with the secret name we gave ourselves, <em>Jellii & Labubu</em>, a language only we understood while the rest of the group was just noise.
             </p>
             <p>
-              We’ve navigated everything, even the occasional “shading,” which was really just a cover for my heart beating too fast every time I saw you typing. You are my princess, a first daughter who carries the world on her shoulders but still finds time to get high on those gees 😔🤣 and dream of the perfect ebelebo fruit.
+              We’ve navigated everything, even the occasional “shading,” which was really just a cover for my heart beating too fast every time I saw you typing. You are my princess, a <strong className="text-primary/95">first daughter</strong> who carries the world on her shoulders but still finds time to get high on those gees 😔🤣.
             </p>
             <p>
-              I’m your “prisoner” with the unkempt beard, the one who promises to always be the person rooting for you. This is our story. A somewhat messy, sometimes beautiful kind of love that I would choose over and over again.
+              I’m your “prisoner” with the unkempt beard, the one who promises to always be the person <strong className="text-primary/95">rooting for you</strong>. This is our story. A somewhat messy, sometimes beautiful kind of love that I would choose <em className="text-primary">over and over again</em>.
             </p>
           </div>
         </CardContent>

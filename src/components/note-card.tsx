@@ -46,7 +46,7 @@ export default function NoteCard({ note, onClose }: NoteCardProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <CardContent className="p-0">
-          <p className="text-lg md:text-xl leading-relaxed text-primary font-body min-h-[12rem] whitespace-pre-wrap">
+          <p className="text-lg md:text-xl text-center leading-relaxed text-primary font-body whitespace-pre-wrap">
             {displayedText}
             {isTyping && <span className="blinking-cursor">|</span>}
           </p>

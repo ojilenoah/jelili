@@ -18,6 +18,8 @@ const animationStyles: { [key: string]: string } = {
   pulse: 'animate-[pulse-glow_4s_ease-in-out_infinite]',
   jitter: 'animate-[jitter_5s_ease-in-out_infinite]',
   glow: 'animate-[soft-glow-anim_3s_ease-in-out_infinite]',
+  fly: 'animate-[fly-around_10s_ease-in-out_infinite]',
+  float: 'animate-[float_6s_ease-in-out_infinite]',
 };
 
 export default function InteractiveIcon({ note, onClick }: InteractiveIconProps) {
