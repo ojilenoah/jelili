@@ -2,8 +2,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Message } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -24,27 +22,21 @@ export default function ChatView({ messages, onNewMessage }: ChatViewProps) {
     e.preventDefault();
     if (newMessage.trim() === '' || !sender) return;
 
-    const text = newMessage;
-    setNewMessage(''); // Optimistically clear
+    const body = newMessage;
+    setNewMessage('');
 
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .insert([{ text, sender }])
+        .from('chat_messages')
+        .insert([{ body, sender, format: 'plain' }])
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        onNewMessage(data as Message); // Optimistically update UI
-      }
-
+      if (error) throw error;
+      if (data) onNewMessage(data as Message);
     } catch (error) {
       console.error('Error sending message:', error);
-      setNewMessage(text); // Put message back on error
+      setNewMessage(body);
     }
   };
 
@@ -58,55 +50,60 @@ export default function ChatView({ messages, onNewMessage }: ChatViewProps) {
   }, [messages]);
 
   return (
-    <div className="flex h-[60vh] w-full flex-col rounded-lg border border-border/50 bg-white/30 frosted-glass">
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+    <div className="flex h-[60vh] w-full flex-col rounded-md border border-border bg-card">
+      <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
         <div className="flex flex-col gap-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn('flex flex-col', {
-                'items-end': message.sender === sender,
-                'items-start': message.sender !== sender,
-              })}
-            >
+          {messages.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-12">
+              Nothing here yet. Write the first line.
+            </p>
+          )}
+          {messages.map((message) => {
+            const isMine = message.sender === sender;
+            return (
               <div
-                className={cn(
-                  'max-w-xs rounded-lg p-3 shadow-sm frosted-glass',
-                  {
-                    'bg-deep-red/5 text-primary-foreground shadow-[0_0_10px] shadow-deep-red/10': message.sender === 'Noah',
-                    'bg-mint-green/5 text-accent-foreground shadow-[0_0_10px] shadow-mint-green/10': message.sender === 'Jelili',
-                  }
-                )}
+                key={message.id}
+                className={cn('flex flex-col', isMine ? 'items-end' : 'items-start')}
               >
-                <p className={cn("text-sm", {
-                    "text-red-900": message.sender === "Noah",
-                    "text-green-900": message.sender === "Jelili"
-                })}>{message.text}</p>
+                <span className="mb-1 text-[10px] uppercase tracking-widest text-muted-foreground font-code">
+                  {message.sender}
+                </span>
+                <div
+                  className={cn(
+                    'max-w-md rounded-md px-4 py-2.5 text-sm leading-relaxed border',
+                    isMine
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'bg-background text-foreground border-border'
+                  )}
+                >
+                  {message.body}
+                </div>
+                <span className="mt-1 text-[10px] text-muted-foreground font-code">
+                  {message.createdAt ? format(message.createdAt, 'p') : ''}
+                </span>
               </div>
-              <span className="mt-1 text-xs text-muted-foreground">
-                {message.createdAt ? format(message.createdAt, 'p') : ''}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
-      <div className="border-t border-border/50 p-4">
+
+      <div className="border-t border-border p-4">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-          <Input
+          <input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Write something for today..."
-            className="flex-1 rounded-full bg-white/50 focus:ring-mint-green/50 focus:ring-2 transition-shadow"
+            className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground focus:outline-none px-2"
             disabled={!sender}
           />
-          <Button
+          <button
             type="submit"
-            size="icon"
-            className="rounded-full bg-mint-green text-white shadow-lg hover:scale-105 hover:shadow-mint-green/30 transition-all"
-            disabled={!sender}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-background hover:opacity-90 disabled:opacity-40 transition-opacity"
+            disabled={!sender || newMessage.trim() === ''}
+            aria-label="Send"
           >
             <Send className="h-4 w-4" />
-          </Button>
+          </button>
         </form>
       </div>
     </div>

@@ -25,92 +25,91 @@ interface ContributionGraphProps {
 }
 
 export default function ContributionGraph({ messages }: ContributionGraphProps) {
-  const contributionData = useMemo(() => {
+  const { contributionData, totalMessages, activeDays } = useMemo(() => {
     const today = new Date();
     const yearStart = startOfYear(today);
     const yearEnd = endOfYear(today);
     const daysInYear = eachDayOfInterval({ start: yearStart, end: yearEnd });
 
-    const contributions = new Map<string, { noah: number; jelili: number }>();
+    const contributions = new Map<string, number>();
 
     for (const message of messages) {
       if (message.createdAt) {
         const dateKey = format(message.createdAt, 'yyyy-MM-dd');
-        const contribution = contributions.get(dateKey) || { noah: 0, jelili: 0 };
-        if (message.sender === 'Noah') {
-          contribution.noah++;
-        } else {
-          contribution.jelili++;
-        }
-        contributions.set(dateKey, contribution);
+        contributions.set(dateKey, (contributions.get(dateKey) ?? 0) + 1);
       }
     }
 
     const firstDayOfYear = getDay(yearStart);
     const emptyDays = Array.from({ length: firstDayOfYear }, (_, i) => ({
       date: `empty-${i}`,
-      state: 'empty',
+      level: -1 as const,
       messageCount: 0,
     }));
 
-    const contributionDays = daysInYear.map((day) => {
+    const days = daysInYear.map((day) => {
       const dateKey = format(day, 'yyyy-MM-dd');
-      const dailyData = contributions.get(dateKey);
-      let state: 'none' | 'Noah' | 'Jelili' | 'both' = 'none';
-      let messageCount = 0;
-      if (dailyData) {
-        if (dailyData.noah > 0 && dailyData.jelili > 0) {
-          state = 'both';
-        } else if (dailyData.noah > 0) {
-          state = 'Noah';
-        } else {
-          state = 'Jelili';
-        }
-        messageCount = dailyData.noah + dailyData.jelili;
-      }
-      return {
-        date: format(day, 'yyyy-MM-dd'),
-        state,
-        messageCount,
-      };
+      const count = contributions.get(dateKey) ?? 0;
+      let level: 0 | 1 | 2 | 3 | 4 = 0;
+      if (count > 0) level = 1;
+      if (count >= 3) level = 2;
+      if (count >= 6) level = 3;
+      if (count >= 10) level = 4;
+      return { date: dateKey, level, messageCount: count };
     });
 
-    return [...emptyDays, ...contributionDays];
+    const activeDays = days.filter((d) => d.messageCount > 0).length;
+    const totalMessages = messages.length;
+
+    return {
+      contributionData: [...emptyDays, ...days],
+      totalMessages,
+      activeDays,
+    };
   }, [messages]);
 
-  const getTooltipText = (day: {
-    state: string;
-    messageCount: number;
-    date: string;
-  }) => {
-    if (day.state === 'none') return `${format(new Date(day.date), 'MMMM d, yyyy')} - No messages`;
-    if (day.state === 'empty') return '';
-
-    const contributor = day.state === 'both' ? 'Both contributed' : `${day.state} only`;
-    const messageText = day.messageCount === 1 ? '1 message' : `${day.messageCount} messages`;
-    return `${format(new Date(day.date), 'MMMM d, yyyy')} - ${messageText} - ${contributor}`;
+  const getTooltipText = (day: { level: number; messageCount: number; date: string }) => {
+    if (day.level === -1) return '';
+    const dateStr = format(new Date(day.date), 'MMMM d, yyyy');
+    if (day.messageCount === 0) return `${dateStr} — no messages`;
+    return `${dateStr} — ${day.messageCount} ${day.messageCount === 1 ? 'message' : 'messages'}`;
   };
 
+  const levelClass = (level: number) =>
+    cn(
+      'aspect-square w-full rounded-[2px] transition-colors',
+      level === -1 && 'bg-transparent',
+      level === 0 && 'bg-muted',
+      level === 1 && 'bg-accent/25',
+      level === 2 && 'bg-accent/50',
+      level === 3 && 'bg-accent/75',
+      level === 4 && 'bg-accent'
+    );
+
   return (
-    <div className="w-full rounded-lg border border-border/50 bg-white/30 p-4 frosted-glass">
-      <div className="overflow-x-auto">
-        <div className="grid grid-cols-53 grid-rows-7 grid-flow-col gap-1 min-w-[700px]">
+    <div className="w-full rounded-md border border-border bg-card p-5 md:p-6">
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-code">
+            {new Date().getFullYear()}
+          </p>
+          <p className="text-sm text-foreground mt-1">
+            {totalMessages} {totalMessages === 1 ? 'message' : 'messages'} ·{' '}
+            {activeDays} {activeDays === 1 ? 'day' : 'days'}
+          </p>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto -mx-2 px-2">
+        <div className="grid grid-cols-53 grid-rows-7 grid-flow-col gap-[3px] min-w-[640px] sm:min-w-0">
           <TooltipProvider>
             {contributionData.map((day, index) => (
               <Tooltip key={index} delayDuration={100}>
                 <TooltipTrigger asChild>
-                  <div
-                    className={cn(
-                      'aspect-square w-full rounded-sm',
-                      { 'bg-neutral-200/50': day.state === 'none' || day.state === 'empty' },
-                      { 'bg-deep-red/60': day.state === 'Noah' },
-                      { 'bg-mint-green/60': day.state === 'Jelili' },
-                      { 'bg-soft-purple': day.state === 'both' }
-                    )}
-                  />
+                  <div className={levelClass(day.level)} />
                 </TooltipTrigger>
-                {day.state !== 'empty' && (
-                  <TooltipContent className="frosted-glass border-primary/10 text-primary transition-all duration-300 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
+                {day.level !== -1 && (
+                  <TooltipContent className="bg-foreground text-background border-0 text-xs">
                     <p>{getTooltipText(day)}</p>
                   </TooltipContent>
                 )}
@@ -119,32 +118,17 @@ export default function ContributionGraph({ messages }: ContributionGraphProps) 
           </TooltipProvider>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-start gap-4 px-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="h-3 w-3 rounded-sm bg-neutral-200/50" />
-          <span>No activity</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="h-3 w-3 rounded-sm bg-deep-red/60" />
-          <span>Noah</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="h-3 w-3 rounded-sm bg-mint-green/60" />
-          <span>Jelili</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="h-3 w-3 rounded-sm bg-soft-purple" />
-          <span>Both</span>
-        </div>
+
+      <div className="mt-4 flex items-center justify-end gap-2 text-[10px] text-muted-foreground font-code uppercase tracking-wider">
+        <span>Less</span>
+        <span className="h-2.5 w-2.5 rounded-[2px] bg-muted" />
+        <span className="h-2.5 w-2.5 rounded-[2px] bg-accent/25" />
+        <span className="h-2.5 w-2.5 rounded-[2px] bg-accent/50" />
+        <span className="h-2.5 w-2.5 rounded-[2px] bg-accent/75" />
+        <span className="h-2.5 w-2.5 rounded-[2px] bg-accent" />
+        <span>More</span>
       </div>
     </div>
   );
 }
 
-declare module 'tailwindcss/defaultTheme' {
-  interface TailwindTheme {
-    gridTemplateColumns: {
-      '53': 'repeat(53, minmax(0, 1fr))',
-    },
-  }
-}

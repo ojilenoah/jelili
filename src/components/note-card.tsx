@@ -1,10 +1,7 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Note } from '@/lib/notes';
-import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 interface NoteCardProps {
@@ -17,50 +14,47 @@ export default function NoteCard({ note, onClose }: NoteCardProps) {
   const [isTyping, setIsTyping] = useState(true);
 
   useEffect(() => {
-    if (note) {
-      setIsTyping(true);
-      setDisplayedText('');
-      let i = 0;
-      const timer = setInterval(() => {
-        setDisplayedText(note.text.slice(0, i));
-        i++;
-        if (i > note.text.length) {
-          clearInterval(timer);
-          setIsTyping(false);
-        }
-      }, 30); // typing speed
-      return () => clearInterval(timer);
-    }
+    if (!note) return;
+    setIsTyping(true);
+    setDisplayedText('');
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayedText(note.text.slice(0, i));
+      i++;
+      if (i > note.text.length) {
+        clearInterval(timer);
+        setIsTyping(false);
+      }
+    }, 25);
+    return () => clearInterval(timer);
   }, [note]);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center animate-card-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/10 backdrop-blur-[2px] animate-card-in"
       onClick={onClose}
     >
-      <Card
-        className={cn(
-          "frosted-glass relative w-11/12 max-w-2xl p-6 border-primary/10 shadow-2xl rounded-2xl soft-glow",
-          note.color
-        )}
+      <div
+        className="relative w-full max-w-xl bg-card border border-border rounded-lg p-8 md:p-10"
         onClick={(e) => e.stopPropagation()}
       >
-        <CardContent className="p-0">
-          <p className="text-lg md:text-xl text-center leading-relaxed text-primary font-body whitespace-pre-wrap">
-            {displayedText}
-            {isTyping && <span className="blinking-cursor">|</span>}
-          </p>
-        </CardContent>
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={onClose}
-          className="absolute top-2 right-2 h-8 w-8 rounded-full text-primary/50 hover:text-primary hover:bg-primary/10"
+          className="absolute top-3 right-3 h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Close"
         >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </Button>
-      </Card>
+          <X className="h-4 w-4" />
+        </button>
+
+        <p className="text-xs uppercase tracking-widest text-muted-foreground font-code mb-4">
+          Note · {String(note.id).padStart(2, '0')}
+        </p>
+
+        <p className="text-base md:text-lg leading-relaxed text-foreground font-body whitespace-pre-wrap">
+          {displayedText}
+          {isTyping && <span className="blinking-cursor text-accent">|</span>}
+        </p>
+      </div>
     </div>
   );
 }

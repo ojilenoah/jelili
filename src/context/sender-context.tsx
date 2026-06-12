@@ -1,7 +1,7 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type Sender = 'Noah' | 'Jelili' | null;
+export type Sender = 'Noah' | 'Jelili';
 
 interface SenderContextType {
   sender: Sender;
@@ -10,8 +10,23 @@ interface SenderContextType {
 
 const SenderContext = createContext<SenderContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'senderName';
+
 export function SenderProvider({ children }: { children: ReactNode }) {
-  const [sender, setSender] = useState<Sender>(null);
+  const [sender, setSenderState] = useState<Sender>('Noah');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY) as Sender | null;
+    if (stored === 'Noah' || stored === 'Jelili') {
+      setSenderState(stored);
+    }
+  }, []);
+
+  const setSender = (next: Sender) => {
+    setSenderState(next);
+    localStorage.setItem(STORAGE_KEY, next);
+  };
+
   return (
     <SenderContext.Provider value={{ sender, setSender }}>
       {children}

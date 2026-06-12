@@ -4,98 +4,89 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Clean monochrome with a single soft accent */
+    --background: 40 20% 98%;        /* near-white, faint warmth */
+    --foreground: 240 6% 12%;        /* near-black */
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 240 6% 12%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 346 72% 51%; /* Deep Red */
-    --primary-foreground: 355 86% 97%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 150 75% 90%; /* Light Mint Green for accents */
-    --accent-foreground: 150 40% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4.8% 95.9%;
-    --input: 240 4.8% 95.9%;
-    --ring: 346 72% 51%;
-    --radius: 0.75rem;
+    --popover-foreground: 240 6% 12%;
 
-    /* Custom colors from spec */
-    --deep-red-hsl: 346 72% 51%;
-    --mint-green-hsl: 150 56% 44%;
-    --soft-purple-hsl: 270 80% 85%;
-    --deep-red: hsl(var(--deep-red-hsl));
-    --mint-green: hsl(var(--mint-green-hsl));
-    --soft-purple: hsl(var(--soft-purple-hsl));
+    --primary: 240 6% 12%;           /* near-black for primary actions */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 12%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 350 65% 50%;           /* the one soft red accent */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 350 65% 50%;
+    --radius: 0.5rem;
+
+    /* Legacy custom tokens — kept so older refs still resolve cleanly */
+    --deep-red-hsl: 350 65% 50%;
+    --mint-green-hsl: 240 6% 12%;
+    --soft-purple-hsl: 240 4% 46%;
   }
- 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 346 72% 51%;
-    --primary-foreground: 355 86% 97%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 150 75% 90%;
-    --accent-foreground: 150 40% 10%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 346 72% 51%;
 
-     /* Custom colors from spec */
-    --deep-red-hsl: 346 72% 51%;
-    --mint-green-hsl: 150 56% 44%;
-    --soft-purple-hsl: 270 80% 75%;
+  .dark {
+    --background: 240 8% 8%;
+    --foreground: 0 0% 96%;
+    --card: 240 8% 10%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 8% 10%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 240 6% 12%;
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 350 65% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 350 65% 55%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(to bottom, hsl(0 0% 100%), hsl(150 75% 90% / 0.2));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
-  .frosted-glass {
-    @apply bg-white/60 dark:bg-black/20 backdrop-blur-lg;
-  }
-  .soft-glow {
-    box-shadow: 0 0 20px 0px hsl(var(--primary) / 0.15);
-  }
+  /* Kept as no-ops so any lingering references don't break */
+  .frosted-glass { @apply bg-card; }
+  .soft-glow { box-shadow: none; }
 }
 
 @keyframes card-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-card-in {
-  animation: card-in 0.3s ease-out forwards;
+  animation: card-in 0.2s ease-out forwards;
 }
 
 @keyframes blink {
@@ -103,6 +94,5 @@
   50% { opacity: 0 }
 }
 .blinking-cursor {
-  animation: blink 0.7s step-end infinite;
-  font-weight: bold;
+  animation: blink 0.8s step-end infinite;
 }
