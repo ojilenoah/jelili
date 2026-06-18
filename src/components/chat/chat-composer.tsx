@@ -35,7 +35,7 @@ export default function ChatComposer({ replyTo, onClearReply, onDropReply }: Cha
   const plainOnly = sender === 'Jelili';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState('');
-  const [format, setFormat] = useState<ContentFormat>('plain');
+  const [format, setFormat] = useState<ContentFormat>('markdown');
   const [preview, setPreview] = useState(false);
   const [pending, setPending] = useState<PendingImage[]>([]);
   const [submitting, setSubmitting] = useState(false);

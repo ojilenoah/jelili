@@ -123,8 +123,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6 md:py-10 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="mx-auto max-w-3xl px-4 pt-6 md:pt-10 pb-40 flex flex-col gap-3">
           {loading ? (
             <div className="flex flex-col gap-3">
               <Skeleton className="h-24 rounded-md" />
@@ -133,7 +133,7 @@ export default function HomePage() {
             </div>
           ) : entries.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-12">
-              Nothing here yet. Write the first one below.
+              Nothing here yet. Tap the pill below to write the first one.
             </p>
           ) : (
             <>
@@ -161,8 +161,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="border-t border-border bg-background">
-        <div className="mx-auto max-w-3xl px-4 py-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
+        <div className="pointer-events-auto w-full max-w-2xl flex justify-center">
           <DiaryComposer onEntryCreated={upsert} />
         </div>
       </div>

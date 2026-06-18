@@ -39,7 +39,8 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
   const isNoah = entry.author === 'Noah';
   const accent = isNoah ? 'border-foreground/50' : 'border-rose-500/50';
   const dot = isNoah ? 'bg-foreground' : 'bg-rose-500';
-  const renderFormat: ContentFormat = plainOnly ? 'plain' : entry.format;
+  const renderFormat: ContentFormat =
+    entry.format === 'plain' ? 'markdown' : entry.format;
   const saveFormat: ContentFormat = plainOnly ? 'plain' : fmt;
 
   useEffect(() => {

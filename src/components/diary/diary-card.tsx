@@ -3,8 +3,8 @@
 import { Pin } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useSender } from '@/context/sender-context';
-import type { DiaryEntry } from '@/lib/types';
+import MarkdownView from '@/components/markdown-view';
+import type { ContentFormat, DiaryEntry } from '@/lib/types';
 
 interface DiaryCardProps {
   entry: DiaryEntry;
@@ -12,23 +12,29 @@ interface DiaryCardProps {
 }
 
 export default function DiaryCard({ entry, onOpen }: DiaryCardProps) {
-  const { sender } = useSender();
-  const plainOnly = sender === 'Jelili';
   const isNoah = entry.author === 'Noah';
   const ringClass = isNoah
     ? 'border-foreground/60 hover:border-foreground'
     : 'border-rose-500/60 hover:border-rose-500';
   const dot = isNoah ? 'bg-foreground' : 'bg-rose-500';
   const styleOverride = entry.card_color ? { borderColor: entry.card_color } : undefined;
-
-  const preview = entry.body.split('\n').slice(0, 4).join('\n');
+  const renderFormat: ContentFormat =
+    entry.format === 'plain' ? 'markdown' : entry.format;
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
       style={styleOverride}
       className={cn(
-        'group w-full text-left flex flex-col gap-2 rounded-md border-2 bg-card p-4 transition-all',
+        'group w-full text-left flex flex-col gap-2 rounded-md border-2 bg-card p-4 cursor-pointer transition-all',
         ringClass
       )}
     >
@@ -53,15 +59,11 @@ export default function DiaryCard({ entry, onOpen }: DiaryCardProps) {
         </h3>
       )}
 
-      <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">
-        {preview}
-      </p>
-
-      {!plainOnly && entry.format !== 'plain' && (
-        <span className="text-[10px] font-code uppercase tracking-wider text-muted-foreground">
-          {entry.format}
-        </span>
-      )}
-    </button>
+      <MarkdownView
+        body={entry.body}
+        format={renderFormat}
+        className="text-sm md:text-[15px]"
+      />
+    </div>
   );
 }

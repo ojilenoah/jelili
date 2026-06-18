@@ -57,7 +57,8 @@ export default function ChatBubble({
   const isNoah = message.sender === 'Noah';
   const isDeleted = !!message.deleted_at;
 
-  const renderFormat: ContentFormat = plainOnly ? 'plain' : message.format;
+  const renderFormat: ContentFormat =
+    message.format === 'plain' ? 'markdown' : message.format;
 
   const bubbleTone = isNoah
     ? 'bg-card border-foreground/60'

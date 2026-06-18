@@ -78,6 +78,15 @@
   /* Kept as no-ops so any lingering references don't break */
   .frosted-glass { @apply bg-card; }
   .soft-glow { box-shadow: none; }
+
+  /* Scrollable content without a visible scrollbar */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes card-in {

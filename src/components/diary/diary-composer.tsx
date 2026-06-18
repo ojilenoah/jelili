@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2, Send } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, Plus, Send, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useSender } from '@/context/sender-context';
 import { useToast } from '@/hooks/use-toast';
@@ -25,13 +25,35 @@ export default function DiaryComposer({ onEntryCreated }: DiaryComposerProps) {
   const { sender } = useSender();
   const { toast } = useToast();
   const plainOnly = sender === 'Jelili';
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [expanded, setExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [format, setFormat] = useState<ContentFormat>('plain');
+  const [format, setFormat] = useState<ContentFormat>('markdown');
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const effectiveFormat: ContentFormat = plainOnly ? 'plain' : format;
+
+  useEffect(() => {
+    if (expanded) {
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    }
+  }, [expanded]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') collapse();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expanded]);
+
+  const collapse = () => {
+    setExpanded(false);
+    setPreview(false);
+  };
 
   const reset = () => {
     setTitle('');
@@ -63,6 +85,7 @@ export default function DiaryComposer({ onEntryCreated }: DiaryComposerProps) {
     }
     if (data) onEntryCreated(data as DiaryEntry);
     reset();
+    setExpanded(false);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -74,13 +97,44 @@ export default function DiaryComposer({ onEntryCreated }: DiaryComposerProps) {
 
   const accent = sender === 'Noah' ? 'border-foreground/40' : 'border-rose-500/40';
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className={cn(
+          'inline-flex items-center gap-2 rounded-full border-2 bg-card px-5 py-3 text-sm font-code uppercase tracking-wider text-foreground shadow-lg hover:shadow-xl transition-all',
+          accent
+        )}
+      >
+        <Plus className="h-4 w-4" />
+        Write
+      </button>
+    );
+  }
+
   return (
-    <form onSubmit={submit} className={cn('flex flex-col gap-3 rounded-md border bg-card p-4', accent)}>
+    <form
+      onSubmit={submit}
+      className={cn(
+        'relative w-full flex flex-col gap-3 rounded-lg border-2 bg-card p-4 shadow-2xl animate-card-in',
+        accent
+      )}
+    >
+      <button
+        type="button"
+        onClick={collapse}
+        aria-label="Close"
+        className="absolute top-2 right-2 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title (optional)"
-        className="bg-transparent border-0 outline-none text-base font-headline placeholder:text-muted-foreground"
+        className="bg-transparent border-0 outline-none text-base font-headline placeholder:text-muted-foreground pr-8"
       />
 
       {preview && !plainOnly ? (
@@ -93,12 +147,13 @@ export default function DiaryComposer({ onEntryCreated }: DiaryComposerProps) {
         </div>
       ) : (
         <GrowingTextarea
+          ref={textareaRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={`Write to yourself, ${sender}…`}
           minRows={2}
-          maxRows={12}
+          maxRows={8}
           className="text-sm placeholder:text-muted-foreground"
         />
       )}
@@ -124,7 +179,7 @@ export default function DiaryComposer({ onEntryCreated }: DiaryComposerProps) {
           </div>
         ) : (
           <span className="text-[10px] font-code uppercase tracking-wider text-muted-foreground">
-            ⌘/Ctrl + Enter to save
+            ⌘/Ctrl + Enter to save · Esc to close
           </span>
         )}
 

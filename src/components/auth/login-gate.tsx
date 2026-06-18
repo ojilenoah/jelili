@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import { KeyRound, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/sender-context';
 import { cn } from '@/lib/utils';
 
@@ -38,13 +38,9 @@ export default function LoginGate({ children }: { children: ReactNode }) {
         className="w-full max-w-sm flex flex-col gap-5 rounded-lg border border-border bg-card p-8 animate-card-in"
       >
         <div className="flex flex-col items-center gap-2">
-          <div className="h-10 w-10 inline-flex items-center justify-center rounded-full border border-border">
-            <KeyRound className="h-4 w-4 text-muted-foreground" />
-          </div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-code">
-            Boomerang Hearts
+            N&amp;J
           </p>
-          <h1 className="font-headline text-xl text-foreground">Say the word</h1>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -58,7 +54,7 @@ export default function LoginGate({ children }: { children: ReactNode }) {
             autoFocus
             autoComplete="off"
             spellCheck={false}
-            placeholder="..."
+            placeholder="a fruit"
             className={cn(
               'w-full rounded-md border bg-background px-3 py-2 text-center text-sm outline-none transition-colors',
               error

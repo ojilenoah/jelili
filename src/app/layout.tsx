@@ -17,7 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Boomerang Hearts',
+  title: 'N&J',
   description: 'A somewhat messy, sometimes beautiful kind of love.',
 };
 
