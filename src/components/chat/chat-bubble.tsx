@@ -71,6 +71,19 @@ export default function ChatBubble({
   const [menuOpen, setMenuOpen] = useState(false);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Swipe-to-reply (touch only). Mouse keeps the HTML5 drag-to-reply
+  // gesture so the two input types don't fight each other.
+  const SWIPE_TRIGGER = 60;
+  const SWIPE_MAX = 100;
+  const swipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+    committed: boolean;
+  } | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeAnimating, setSwipeAnimating] = useState(true);
+
   const cancelLongPress = () => {
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
@@ -95,6 +108,76 @@ export default function ChatBubble({
       (sender === 'Jelili' && !!message.delete_attempt_at)
     );
   }
+
+  const onSwipePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'touch') return;
+    if (editing || isDeletedForLongPress()) return;
+    swipeStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      pointerId: e.pointerId,
+      committed: false,
+    };
+  };
+
+  const onSwipePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+
+    if (!start.committed) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        // Direction must match this bubble's side. Outgoing bubbles
+        // swipe left; incoming swipe right.
+        const allowed = isMine ? dx < 0 : dx > 0;
+        if (allowed) {
+          start.committed = true;
+          setSwipeAnimating(false);
+          cancelLongPress();
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          } catch {
+            // ignore — some browsers throw if already captured
+          }
+        } else {
+          // Wrong direction — give up so the user can still scroll
+          // or interact normally.
+          swipeStartRef.current = null;
+        }
+      } else if (Math.abs(dy) > 8) {
+        // Vertical movement first → user is scrolling; bow out.
+        swipeStartRef.current = null;
+      }
+    }
+
+    if (start.committed) {
+      const allowedDx = isMine ? Math.min(0, dx) : Math.max(0, dx);
+      const clamped = Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, allowedDx));
+      setSwipeOffset(clamped);
+    }
+  };
+
+  const finishSwipe = (e: React.PointerEvent<HTMLDivElement>, fire: boolean) => {
+    const start = swipeStartRef.current;
+    if (!start || start.pointerId !== e.pointerId) return;
+    const wasCommitted = start.committed;
+    const finalOffset = swipeOffset;
+    swipeStartRef.current = null;
+    setSwipeAnimating(true);
+    setSwipeOffset(0);
+    if (fire && wasCommitted && Math.abs(finalOffset) >= SWIPE_TRIGGER) {
+      onReply(message);
+    }
+  };
+
+  const onSwipePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    finishSwipe(e, true);
+  };
+
+  const onSwipePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    finishSwipe(e, false);
+  };
 
   const isMine = message.sender === sender;
   const isNoah = message.sender === 'Noah';
@@ -228,32 +311,55 @@ export default function ChatBubble({
       </span>
 
       <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-        <PopoverAnchor asChild>
-          <div
-            draggable={!isDeleted && !editing}
-            onDragStart={(e) => {
-              e.dataTransfer.setData('application/x-chat-message-id', message.id);
-              e.dataTransfer.effectAllowed = 'copy';
-            }}
-            onContextMenu={(e) => {
-              if (isDeleted || editing) return;
-              e.preventDefault();
-              setMenuOpen(true);
-            }}
-            onTouchStart={startLongPress}
-            onTouchEnd={cancelLongPress}
-            onTouchMove={cancelLongPress}
-            onTouchCancel={cancelLongPress}
-            style={{ WebkitTouchCallout: 'none', WebkitUserSelect: menuOpen ? 'none' : undefined }}
-            className={cn(
-              'relative w-full min-w-0 overflow-hidden rounded-2xl border-2 px-3 py-2 text-sm shadow-sm [overflow-wrap:anywhere] select-none md:select-text',
-              isDeleted
-                ? 'bg-muted border-border text-muted-foreground italic'
-                : bubbleTone,
-              showAttemptHint && 'opacity-70',
-              !isDeleted && !editing && 'cursor-grab active:cursor-grabbing'
-            )}
-          >
+        <div className="relative w-full min-w-0 flex flex-col">
+          {!isDeleted && (
+            <CornerUpLeft
+              aria-hidden
+              className={cn(
+                'pointer-events-none absolute top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-opacity duration-100',
+                isMine ? 'right-2' : 'left-2'
+              )}
+              style={{
+                opacity: Math.min(1, Math.abs(swipeOffset) / SWIPE_TRIGGER),
+              }}
+            />
+          )}
+          <PopoverAnchor asChild>
+            <div
+              draggable={!isDeleted && !editing}
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/x-chat-message-id', message.id);
+                e.dataTransfer.effectAllowed = 'copy';
+              }}
+              onContextMenu={(e) => {
+                if (isDeleted || editing) return;
+                e.preventDefault();
+                setMenuOpen(true);
+              }}
+              onTouchStart={startLongPress}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+              onTouchCancel={cancelLongPress}
+              onPointerDown={onSwipePointerDown}
+              onPointerMove={onSwipePointerMove}
+              onPointerUp={onSwipePointerUp}
+              onPointerCancel={onSwipePointerCancel}
+              style={{
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: menuOpen ? 'none' : undefined,
+                transform: `translateX(${swipeOffset}px)`,
+                transition: swipeAnimating ? 'transform 200ms ease-out' : 'none',
+                touchAction: 'pan-y',
+              }}
+              className={cn(
+                'relative w-full min-w-0 overflow-hidden rounded-2xl border-2 px-3 py-2 text-sm shadow-sm [overflow-wrap:anywhere] select-none md:select-text',
+                isDeleted
+                  ? 'bg-muted border-border text-muted-foreground italic'
+                  : bubbleTone,
+                showAttemptHint && 'opacity-70',
+                !isDeleted && !editing && 'cursor-grab active:cursor-grabbing'
+              )}
+            >
         {replyToMessage && !isDeleted && (
           <button
             type="button"
@@ -365,8 +471,9 @@ export default function ChatBubble({
         ) : (
           <MarkdownView body={message.body} format={renderFormat} className="text-sm" />
         )}
-          </div>
-        </PopoverAnchor>
+            </div>
+          </PopoverAnchor>
+        </div>
         <PopoverContent
           align={isMine ? 'end' : 'start'}
           side="top"
