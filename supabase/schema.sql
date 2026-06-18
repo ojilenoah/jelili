@@ -226,6 +226,7 @@ alter table diary_entries    replica identity full;
 alter table chat_messages    replica identity full;
 alter table chat_attachments replica identity full;
 alter table chat_reactions   replica identity full;
+alter table chat_read_state  replica identity full;
 
 do $$
 begin
@@ -234,6 +235,7 @@ begin
     begin alter publication supabase_realtime add table chat_messages;    exception when duplicate_object then null; end;
     begin alter publication supabase_realtime add table chat_attachments; exception when duplicate_object then null; end;
     begin alter publication supabase_realtime add table chat_reactions;   exception when duplicate_object then null; end;
+    begin alter publication supabase_realtime add table chat_read_state;  exception when duplicate_object then null; end;
   end if;
 end $$;
 

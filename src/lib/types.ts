@@ -2,6 +2,28 @@ export type Sender = 'Noah' | 'Jelili';
 
 export type ContentFormat = 'plain' | 'markdown' | 'code' | 'quote';
 
+export interface ChatAttachment {
+  id: string;
+  message_id: string;
+  storage_path: string;
+  public_url: string | null;
+  file_name: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  width: number | null;
+  height: number | null;
+  position: number;
+  created_at: string;
+}
+
+export interface ChatReaction {
+  id: string;
+  message_id: string;
+  sender: Sender;
+  emoji: string;
+  created_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: Sender;
@@ -14,10 +36,14 @@ export interface ChatMessage {
   deleted_at: string | null;
 }
 
+export interface ChatMessageRich extends ChatMessage {
+  chat_attachments: ChatAttachment[];
+  chat_reactions: ChatReaction[];
+}
+
 /**
- * Back-compat alias. The existing diary route renders a chat view that
- * was built against the old `messages` table (id:number, text:string).
- * New code should prefer `ChatMessage`.
+ * Back-compat alias for the legacy diary route while it still imports
+ * the simple `Message` name.
  */
 export type Message = ChatMessage;
 

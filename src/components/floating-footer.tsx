@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookHeart } from 'lucide-react';
+import { BookHeart, MessageCircleHeart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', icon: Home, label: 'Home' },
-  { href: '/diary', icon: BookHeart, label: 'Diary' },
+  { href: '/', icon: BookHeart, label: 'Diary' },
+  { href: '/chat', icon: MessageCircleHeart, label: 'Chat' },
 ];
 
 export default function FloatingFooter() {

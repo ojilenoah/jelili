@@ -1,13 +1,8 @@
-"use client";
+'use client';
 
 import React from 'react';
-import FloatingFooter from '@/components/floating-footer';
+import LoginGate from '@/components/auth/login-gate';
 
 export function AppInitializer({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      {children}
-      <FloatingFooter />
-    </>
-  );
+  return <LoginGate>{children}</LoginGate>;
 }

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase-client';
 import { useSender } from '@/context/sender-context';
 import { useToast } from '@/hooks/use-toast';
 import MarkdownView from '@/components/markdown-view';
+import GrowingTextarea from '@/components/growing-textarea';
 import type { ContentFormat, DiaryEntry } from '@/lib/types';
 
 const FORMATS: { value: ContentFormat; label: string }[] = [
@@ -27,6 +28,7 @@ interface DiaryModalProps {
 export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: DiaryModalProps) {
   const { sender } = useSender();
   const { toast } = useToast();
+  const plainOnly = sender === 'Jelili';
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(entry.title ?? '');
   const [body, setBody] = useState(entry.body);
@@ -35,8 +37,10 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
 
   const isMine = entry.author === sender;
   const isNoah = entry.author === 'Noah';
-  const accent = isNoah ? 'border-emerald-500/40' : 'border-rose-500/40';
-  const dot = isNoah ? 'bg-emerald-500' : 'bg-rose-500';
+  const accent = isNoah ? 'border-foreground/50' : 'border-rose-500/50';
+  const dot = isNoah ? 'bg-foreground' : 'bg-rose-500';
+  const renderFormat: ContentFormat = plainOnly ? 'plain' : entry.format;
+  const saveFormat: ContentFormat = plainOnly ? 'plain' : fmt;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -54,7 +58,7 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
       .update({
         title: title.trim() || null,
         body,
-        format: fmt,
+        format: saveFormat,
       })
       .eq('id', entry.id)
       .select()
@@ -109,7 +113,7 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg border bg-card p-6 md:p-8',
+          'relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg border-2 bg-card p-6 md:p-8',
           accent
         )}
       >
@@ -137,30 +141,35 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
               placeholder="Title (optional)"
               className="bg-transparent border-0 outline-none text-lg md:text-xl font-headline placeholder:text-muted-foreground"
             />
-            <textarea
+            <GrowingTextarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={10}
-              className="bg-transparent border-0 outline-none text-sm leading-relaxed resize-y min-h-[200px]"
+              minRows={4}
+              maxRows={20}
+              className="text-sm"
             />
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1 p-1 rounded-md border border-border bg-background text-[10px] font-code uppercase tracking-wider">
-                {FORMATS.map((f) => (
-                  <button
-                    key={f.value}
-                    type="button"
-                    onClick={() => setFmt(f.value)}
-                    className={cn(
-                      'px-2 py-1 rounded transition-colors',
-                      fmt === f.value
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+              {!plainOnly ? (
+                <div className="flex items-center gap-1 p-1 rounded-md border border-border bg-background text-[10px] font-code uppercase tracking-wider">
+                  {FORMATS.map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => setFmt(f.value)}
+                      className={cn(
+                        'px-2 py-1 rounded transition-colors',
+                        fmt === f.value
+                          ? 'bg-foreground text-background'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <span />
+              )}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setEditing(false)}
@@ -186,7 +195,7 @@ export default function DiaryModal({ entry, onClose, onUpdated, onDeleted }: Dia
                 {entry.title}
               </h2>
             )}
-            <MarkdownView body={entry.body} format={entry.format} className="text-base leading-relaxed" />
+            <MarkdownView body={entry.body} format={renderFormat} className="text-base leading-relaxed" />
 
             {isMine && (
               <div className="mt-6 flex items-center gap-2 pt-4 border-t border-border">

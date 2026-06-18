@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { supabase } from '@/lib/supabase-client';
 import { Skeleton } from '@/components/ui/skeleton';
-import SenderToggle from '@/components/diary/sender-toggle';
+import PageNav from '@/components/page-nav';
+import NotificationBell from '@/components/notification-bell';
 import DiaryComposer from '@/components/diary/diary-composer';
 import DiaryCard from '@/components/diary/diary-card';
 import DiaryModal from '@/components/diary/diary-modal';
@@ -15,6 +16,18 @@ function dateLabel(iso: string) {
   if (isToday(d)) return 'Today';
   if (isYesterday(d)) return 'Yesterday';
   return format(d, 'EEEE, MMMM d');
+}
+
+function DateDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 my-2">
+      <div className="flex-1 h-px bg-border" />
+      <span className="text-[10px] font-code uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -94,62 +107,64 @@ export default function HomePage() {
   const openEntry = entries.find((e) => e.id === openId) ?? null;
 
   return (
-    <main className="min-h-screen w-full bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-10 md:py-16 pb-32 flex flex-col gap-8">
-        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-code">
-              Diary
-            </p>
-            <h1 className="font-headline text-2xl md:text-3xl text-foreground mt-1">
-              Notes to ourselves
-            </h1>
-          </div>
-          <SenderToggle />
-        </header>
-
-        <DiaryComposer onEntryCreated={upsert} />
-
-        {loading ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            <Skeleton className="h-32 rounded-md" />
-            <Skeleton className="h-32 rounded-md" />
-            <Skeleton className="h-32 rounded-md" />
-            <Skeleton className="h-32 rounded-md" />
-          </div>
-        ) : entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-12">
-            Nothing here yet. Write the first one.
+    <main className="h-screen w-full bg-background flex flex-col">
+      <header className="flex items-center justify-between gap-3 px-4 md:px-8 py-4 border-b border-border bg-background">
+        <div>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-code">
+            Diary
           </p>
-        ) : (
-          <div className="flex flex-col gap-8">
-            {grouped.pinned.length > 0 && (
-              <section>
-                <h2 className="text-[10px] uppercase tracking-widest font-code text-muted-foreground mb-3">
-                  Pinned
-                </h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {grouped.pinned.map((e) => (
-                    <DiaryCard key={e.id} entry={e} onOpen={() => setOpenId(e.id)} />
-                  ))}
-                </div>
-              </section>
-            )}
+          <h1 className="font-headline text-lg md:text-xl text-foreground">
+            Notes to ourselves
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <PageNav />
+        </div>
+      </header>
 
-            {grouped.ordered.map(([date, dayEntries]) => (
-              <section key={date}>
-                <h2 className="text-[10px] uppercase tracking-widest font-code text-muted-foreground mb-3 sticky top-0 bg-background py-1 z-10">
-                  {dateLabel(date)}
-                </h2>
-                <div className="grid gap-3 md:grid-cols-2">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 py-6 md:py-10 flex flex-col gap-3">
+          {loading ? (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-24 rounded-md" />
+              <Skeleton className="h-24 rounded-md" />
+              <Skeleton className="h-24 rounded-md" />
+            </div>
+          ) : entries.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-12">
+              Nothing here yet. Write the first one below.
+            </p>
+          ) : (
+            <>
+              {grouped.pinned.length > 0 && (
+                <>
+                  <DateDivider label="Pinned" />
+                  <div className="flex flex-col gap-3">
+                    {grouped.pinned.map((e) => (
+                      <DiaryCard key={e.id} entry={e} onOpen={() => setOpenId(e.id)} />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {grouped.ordered.map(([date, dayEntries]) => (
+                <div key={date} className="flex flex-col gap-3">
+                  <DateDivider label={dateLabel(date)} />
                   {dayEntries.map((e) => (
                     <DiaryCard key={e.id} entry={e} onOpen={() => setOpenId(e.id)} />
                   ))}
                 </div>
-              </section>
-            ))}
-          </div>
-        )}
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-border bg-background">
+        <div className="mx-auto max-w-3xl px-4 py-4">
+          <DiaryComposer onEntryCreated={upsert} />
+        </div>
       </div>
 
       {openEntry && (
