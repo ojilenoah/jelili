@@ -6,6 +6,17 @@ import { BookHeart, MessageCircleHeart, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/sender-context';
 import { cn } from '@/lib/utils';
 import ThemeToggle from '@/components/theme-toggle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const ITEMS = [
   { href: '/', icon: BookHeart, label: 'Diary' },
@@ -44,21 +55,37 @@ export default function PageNav() {
       <ThemeToggle />
 
       {sender && (
-        <button
-          onClick={logout}
-          aria-label="Log out"
-          title={`Logged in as ${sender} — click to log out`}
-          className="inline-flex h-9 items-center gap-1.5 px-2 rounded-md border border-border bg-card text-[10px] font-code uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <span
-            className={cn(
-              'h-1.5 w-1.5 rounded-full',
-              sender === 'Noah' ? 'bg-foreground' : 'bg-rose-500'
-            )}
-          />
-          {sender}
-          <LogOut className="h-3 w-3 ml-0.5" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              aria-label="Log out"
+              title={`Logged in as ${sender}`}
+              className="inline-flex h-9 items-center gap-1.5 px-2 rounded-md border border-border bg-card text-[10px] font-code uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  sender === 'Noah' ? 'bg-foreground' : 'bg-rose-500'
+                )}
+              />
+              {sender}
+              <LogOut className="h-3 w-3 ml-0.5" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Log out, {sender}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You'll need to enter the passphrase again to come back in.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Stay</AlertDialogCancel>
+              <AlertDialogAction onClick={logout}>Log out</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

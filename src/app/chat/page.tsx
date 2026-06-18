@@ -7,12 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import PageNav from '@/components/page-nav';
 import ChatBubble from '@/components/chat/chat-bubble';
 import ChatComposer from '@/components/chat/chat-composer';
-import { useSender } from '@/context/sender-context';
 import { useChatReadState } from '@/lib/chat-read-state';
 import type { ChatAttachment, ChatMessageRich, ChatReaction } from '@/lib/types';
 
 export default function ChatPage() {
-  const { sender } = useSender();
   const { otherLastReadAt, markRead } = useChatReadState();
   const [messages, setMessages] = useState<ChatMessageRich[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,12 +173,10 @@ export default function ChatPage() {
     return m;
   }, [messages]);
 
-  // Asymmetric deletion: Noah (the debugging viewer) sees nothing where a
-  // soft-deleted message used to be. Jelili still sees the tombstone bubble.
-  const visibleMessages = useMemo(
-    () => (sender === 'Noah' ? messages.filter((m) => !m.deleted_at) : messages),
-    [messages, sender]
-  );
+  // Both parties see real soft-deletes as tombstones. Jelili's
+  // "fake" delete attempts are rendered by ChatBubble itself — the row
+  // stays in the feed for both senders.
+  const visibleMessages = messages;
 
   const onDropReply = (id: string) => {
     const m = messageMap.get(id);
@@ -213,7 +209,7 @@ export default function ChatPage() {
         <div className="mx-auto max-w-3xl h-full px-4 py-4 flex flex-col gap-4 min-h-0">
           <div
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto rounded-md border border-border bg-card p-4 md:p-6"
+            className="flex-1 min-h-0 overflow-y-auto no-scrollbar rounded-md border border-border bg-card p-4 md:p-6"
           >
             {loading ? (
               <div className="flex flex-col gap-3">

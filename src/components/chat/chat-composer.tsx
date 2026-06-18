@@ -185,7 +185,10 @@ export default function ChatComposer({ replyTo, onClearReply, onDropReply }: Cha
               Replying to {replyTo.sender}
             </p>
             <p className="truncate text-foreground/80">
-              {replyTo.deleted_at ? '(deleted)' : replyTo.body || '[image]'}
+              {replyTo.deleted_at ||
+              (sender === 'Jelili' && replyTo.delete_attempt_at)
+                ? '(deleted)'
+                : replyTo.body || '[image]'}
             </p>
           </div>
           <button

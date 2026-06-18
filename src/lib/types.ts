@@ -34,6 +34,12 @@ export interface ChatMessage {
   edited_at: string | null;
   created_at: string;
   deleted_at: string | null;
+  /**
+   * Set when Jelili tries to delete a message. The row stays alive;
+   * Jelili sees a tombstone in her view, Noah sees the original bubble
+   * with a "she tried to delete this" hint.
+   */
+  delete_attempt_at: string | null;
 }
 
 export interface ChatMessageRich extends ChatMessage {

@@ -69,18 +69,28 @@ create index if not exists diary_entries_author_idx
 --  a tombstone bubble.
 -- ============================================================
 create table if not exists chat_messages (
-  id           uuid primary key default gen_random_uuid(),
-  sender       sender_name not null,
-  body         text not null default '',
-  format       content_format not null default 'plain',
+  id                 uuid primary key default gen_random_uuid(),
+  sender             sender_name not null,
+  body               text not null default '',
+  format             content_format not null default 'plain',
   -- Drag-to-reply target. ON DELETE SET NULL so a hard-deleted
   -- parent does not nuke the child; soft-delete keeps the ref.
-  reply_to_id  uuid references chat_messages(id) on delete set null,
-  forwarded    boolean not null default false,
-  edited_at    timestamptz,
-  created_at   timestamptz not null default now(),
-  deleted_at   timestamptz
+  reply_to_id        uuid references chat_messages(id) on delete set null,
+  forwarded          boolean not null default false,
+  edited_at          timestamptz,
+  created_at         timestamptz not null default now(),
+  -- Real soft-delete. Set when Noah deletes; visible as a tombstone
+  -- bubble to both parties.
+  deleted_at         timestamptz,
+  -- Jelili's "fake" delete attempt. The message stays alive; only
+  -- Jelili's view tombstones the bubble, and Noah's view shows a
+  -- small "she tried to delete this" hint.
+  delete_attempt_at  timestamptz
 );
+
+-- Pick up the new column on existing projects without losing data.
+alter table chat_messages
+  add column if not exists delete_attempt_at timestamptz;
 
 create index if not exists chat_messages_feed_idx
   on chat_messages (created_at asc);

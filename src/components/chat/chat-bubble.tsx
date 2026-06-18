@@ -11,6 +11,7 @@ import {
   X,
   Check,
   CheckCheck,
+  EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase-client';
@@ -55,7 +56,12 @@ export default function ChatBubble({
 
   const isMine = message.sender === sender;
   const isNoah = message.sender === 'Noah';
-  const isDeleted = !!message.deleted_at;
+  const isReallyDeleted = !!message.deleted_at;
+  const isAttempted = !!message.delete_attempt_at;
+  // Jelili sees her own delete-attempt as a tombstone too. Noah only
+  // sees the tombstone for real (deleted_at) deletes.
+  const isDeleted = isReallyDeleted || (sender === 'Jelili' && isAttempted);
+  const showAttemptHint = sender === 'Noah' && isAttempted && !isReallyDeleted;
 
   const renderFormat: ContentFormat =
     message.format === 'plain' ? 'markdown' : message.format;
@@ -104,9 +110,15 @@ export default function ChatBubble({
     if (busy) return;
     if (!confirm('Delete this message?')) return;
     setBusy(true);
+    // Jelili's delete is a fake-out — only stamps delete_attempt_at, the
+    // row stays alive. Noah's delete is a real soft-delete.
+    const patch =
+      sender === 'Jelili'
+        ? { delete_attempt_at: new Date().toISOString() }
+        : { deleted_at: new Date().toISOString() };
     const { error } = await supabase
       .from('chat_messages')
-      .update({ deleted_at: new Date().toISOString() })
+      .update(patch)
       .eq('id', message.id);
     setBusy(false);
     if (error) {
@@ -137,6 +149,7 @@ export default function ChatBubble({
           isDeleted
             ? 'bg-muted border-border text-muted-foreground italic'
             : bubbleTone,
+          showAttemptHint && 'opacity-70',
           !isDeleted && !editing && 'cursor-grab active:cursor-grabbing'
         )}
       >
@@ -152,7 +165,10 @@ export default function ChatBubble({
                 {replyToMessage.sender}
               </p>
               <p className="truncate text-foreground/80">
-                {replyToMessage.deleted_at ? '(deleted)' : replyToMessage.body || '[image]'}
+                {replyToMessage.deleted_at ||
+                (sender === 'Jelili' && replyToMessage.delete_attempt_at)
+                  ? '(deleted)'
+                  : replyToMessage.body || '[image]'}
               </p>
             </div>
           </button>
@@ -271,6 +287,15 @@ export default function ChatBubble({
       <div className="flex items-center gap-2 px-2 text-[10px] text-muted-foreground font-code">
         <span>{format(new Date(message.created_at), 'p')}</span>
         {message.edited_at && !isDeleted && <span>· edited</span>}
+        {showAttemptHint && (
+          <span
+            className="inline-flex items-center gap-1 italic text-rose-500"
+            title="Jelili tried to delete this — visible only to you"
+          >
+            <EyeOff className="h-3 w-3" />
+            she tried to delete this
+          </span>
+        )}
         {isMine && !isDeleted && (
           <span
             className={cn('inline-flex items-center', seenByOther && 'text-emerald-500')}
