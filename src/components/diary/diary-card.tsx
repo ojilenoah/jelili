@@ -34,7 +34,7 @@ export default function DiaryCard({ entry, onOpen }: DiaryCardProps) {
       }}
       style={styleOverride}
       className={cn(
-        'group w-full text-left flex flex-col gap-2 rounded-md border-2 bg-card p-4 cursor-pointer transition-all',
+        'group w-full min-w-0 overflow-hidden text-left flex flex-col gap-2 rounded-md border-2 bg-card p-4 cursor-pointer transition-all [overflow-wrap:anywhere]',
         ringClass
       )}
     >

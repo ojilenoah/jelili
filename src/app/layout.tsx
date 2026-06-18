@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { AppInitializer } from '@/app/app-initializer';
@@ -19,6 +19,16 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'N&J',
   description: 'A somewhat messy, sometimes beautiful kind of love.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // When the on-screen keyboard appears, shrink the layout viewport
+  // instead of letting it overlay fixed/absolute content. Without this,
+  // the floating composer + chat input get hidden behind the keyboard
+  // on mobile.
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({

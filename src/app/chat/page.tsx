@@ -192,7 +192,7 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="h-screen w-full bg-background flex flex-col">
+    <main className="h-screen h-[100dvh] w-full bg-background flex flex-col">
       <header className="flex items-center justify-between gap-3 px-4 md:px-8 py-4 border-b border-border bg-background">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-code">
@@ -206,7 +206,12 @@ export default function ChatPage() {
       </header>
 
       <div className="flex-1 min-h-0">
-        <div className="mx-auto max-w-3xl h-full px-4 py-4 flex flex-col gap-4 min-h-0">
+        <div
+          className="mx-auto max-w-3xl h-full px-4 pt-4 flex flex-col gap-4 min-h-0"
+          style={{
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+          }}
+        >
           <div
             ref={scrollRef}
             className="flex-1 min-h-0 overflow-y-auto no-scrollbar rounded-md border border-border bg-card p-4 md:p-6"

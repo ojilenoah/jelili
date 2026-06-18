@@ -107,7 +107,7 @@ export default function HomePage() {
   const openEntry = entries.find((e) => e.id === openId) ?? null;
 
   return (
-    <main className="h-screen w-full bg-background flex flex-col">
+    <main className="h-screen h-[100dvh] w-full bg-background flex flex-col">
       <header className="flex items-center justify-between gap-3 px-4 md:px-8 py-4 border-b border-border bg-background">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-code">
@@ -161,7 +161,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
+      <div
+        className="pointer-events-none fixed inset-x-0 z-30 flex justify-center px-4"
+        style={{
+          bottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+        }}
+      >
         <div className="pointer-events-auto w-full max-w-2xl flex justify-center">
           <DiaryComposer onEntryCreated={upsert} />
         </div>

@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { format } from 'date-fns';
 import {
   Pencil,
   Trash2,
   CornerUpLeft,
-  SmilePlus,
   Loader2,
   X,
   Check,
@@ -19,6 +18,11 @@ import { useSender } from '@/context/sender-context';
 import { useToast } from '@/hooks/use-toast';
 import MarkdownView from '@/components/markdown-view';
 import GrowingTextarea from '@/components/growing-textarea';
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from '@/components/ui/popover';
 import type { ChatMessageRich, ContentFormat } from '@/lib/types';
 
 const QUICK_REACTIONS = ['❤️', '😂', '😭', '😍', '🔥', '👍', '👎', '🙏'];
@@ -59,10 +63,38 @@ export default function ChatBubble({
   const [editBody, setEditBody] = useState(message.body);
   const [editFormat, setEditFormat] = useState<ContentFormat>(message.format);
   const [busy, setBusy] = useState(false);
-  const [showReactions, setShowReactions] = useState(false);
   // The emoji of *my* reaction the user is currently editing (the popover
   // is anchored to that pill).
   const [editingEmoji, setEditingEmoji] = useState<string | null>(null);
+  // Context menu open state — triggered by right-click on desktop or
+  // long-press on touch. Radix positions the menu relative to the bubble.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelLongPress = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const startLongPress = () => {
+    if (isDeletedForLongPress() || editing) return;
+    cancelLongPress();
+    pressTimerRef.current = setTimeout(() => {
+      setMenuOpen(true);
+      pressTimerRef.current = null;
+    }, 450);
+  };
+
+  // Helper inside startLongPress; declared as a function so the closure
+  // captures the freshest values from the render.
+  function isDeletedForLongPress() {
+    return (
+      !!message.deleted_at ||
+      (sender === 'Jelili' && !!message.delete_attempt_at)
+    );
+  }
 
   const isMine = message.sender === sender;
   const isNoah = message.sender === 'Noah';
@@ -98,7 +130,6 @@ export default function ChatBubble({
       if (error)
         toast({ title: 'Could not react', description: error.message, variant: 'destructive' });
     }
-    setShowReactions(false);
   };
 
   // Change one of my own reactions to a different emoji (or remove it
@@ -188,7 +219,7 @@ export default function ChatBubble({
     <div
       id={`msg-${message.id}`}
       className={cn(
-        'group flex flex-col gap-1 max-w-[85%] md:max-w-[70%]',
+        'group flex flex-col gap-1 min-w-0 max-w-[85%] md:max-w-[70%]',
         isMine ? 'self-end items-end' : 'self-start items-start'
       )}
     >
@@ -196,21 +227,33 @@ export default function ChatBubble({
         {message.sender}
       </span>
 
-      <div
-        draggable={!isDeleted && !editing}
-        onDragStart={(e) => {
-          e.dataTransfer.setData('application/x-chat-message-id', message.id);
-          e.dataTransfer.effectAllowed = 'copy';
-        }}
-        className={cn(
-          'relative rounded-2xl border-2 px-3 py-2 text-sm shadow-sm',
-          isDeleted
-            ? 'bg-muted border-border text-muted-foreground italic'
-            : bubbleTone,
-          showAttemptHint && 'opacity-70',
-          !isDeleted && !editing && 'cursor-grab active:cursor-grabbing'
-        )}
-      >
+      <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+        <PopoverAnchor asChild>
+          <div
+            draggable={!isDeleted && !editing}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('application/x-chat-message-id', message.id);
+              e.dataTransfer.effectAllowed = 'copy';
+            }}
+            onContextMenu={(e) => {
+              if (isDeleted || editing) return;
+              e.preventDefault();
+              setMenuOpen(true);
+            }}
+            onTouchStart={startLongPress}
+            onTouchEnd={cancelLongPress}
+            onTouchMove={cancelLongPress}
+            onTouchCancel={cancelLongPress}
+            style={{ WebkitTouchCallout: 'none', WebkitUserSelect: menuOpen ? 'none' : undefined }}
+            className={cn(
+              'relative w-full min-w-0 overflow-hidden rounded-2xl border-2 px-3 py-2 text-sm shadow-sm [overflow-wrap:anywhere] select-none md:select-text',
+              isDeleted
+                ? 'bg-muted border-border text-muted-foreground italic'
+                : bubbleTone,
+              showAttemptHint && 'opacity-70',
+              !isDeleted && !editing && 'cursor-grab active:cursor-grabbing'
+            )}
+          >
         {replyToMessage && !isDeleted && (
           <button
             type="button"
@@ -322,7 +365,78 @@ export default function ChatBubble({
         ) : (
           <MarkdownView body={message.body} format={renderFormat} className="text-sm" />
         )}
-      </div>
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          align={isMine ? 'end' : 'start'}
+          side="top"
+          sideOffset={6}
+          className="w-auto min-w-[180px] p-1"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          {!isDeleted && (
+            <div className="flex gap-0.5 px-1 py-1 border-b border-border mb-1">
+              {QUICK_REACTIONS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => {
+                    void toggleReaction(e);
+                    setMenuOpen(false);
+                  }}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-base"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+          {!isDeleted && (
+            <button
+              type="button"
+              onClick={() => {
+                onReply(message);
+                setMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+            >
+              <CornerUpLeft className="h-4 w-4" />
+              Reply
+            </button>
+          )}
+          {isMine && !isDeleted && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(true);
+                  setMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void remove();
+                }}
+                className="w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </button>
+            </>
+          )}
+          {isDeleted && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              No actions available.
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
 
       {grouped.length > 0 && !isDeleted && (
         <div className="flex flex-wrap gap-1 px-1">
@@ -386,56 +500,6 @@ export default function ChatBubble({
             {seenByOther ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
           </span>
         )}
-        <span className="flex items-center gap-2">
-          {!isDeleted && (
-            <>
-              <button
-                onClick={() => onReply(message)}
-                className="hover:text-foreground inline-flex items-center gap-1"
-              >
-                <CornerUpLeft className="h-3 w-3" /> Reply
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowReactions((s) => !s)}
-                  className="hover:text-foreground inline-flex items-center gap-1"
-                >
-                  <SmilePlus className="h-3 w-3" /> React
-                </button>
-                {showReactions && (
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 flex gap-0.5 rounded-full border border-border bg-card p-1 shadow-sm">
-                    {QUICK_REACTIONS.map((e) => (
-                      <button
-                        key={e}
-                        type="button"
-                        onClick={() => toggleReaction(e)}
-                        className="h-7 w-7 inline-flex items-center justify-center rounded-full hover:bg-muted text-base"
-                      >
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {isMine && (
-                <>
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="hover:text-foreground inline-flex items-center gap-1"
-                  >
-                    <Pencil className="h-3 w-3" /> Edit
-                  </button>
-                  <button
-                    onClick={remove}
-                    className="hover:text-destructive inline-flex items-center gap-1"
-                  >
-                    <Trash2 className="h-3 w-3" /> Delete
-                  </button>
-                </>
-              )}
-            </>
-          )}
-        </span>
       </div>
     </div>
   );
