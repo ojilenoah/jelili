@@ -1,19 +1,28 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/sender-context';
 import { cn } from '@/lib/utils';
 
 export default function LoginGate({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { sender, hydrated, login } = useAuth();
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [reveal, setReveal] = useState(false);
+  // When true, we're between "login accepted" and "router landed on /".
+  // Show the same hydration spinner so the previous route never paints.
+  const [redirecting, setRedirecting] = useState(false);
 
-  if (!hydrated) {
+  // Clear the redirect flag as soon as the navigation lands.
+  useEffect(() => {
+    if (redirecting && pathname === '/') setRedirecting(false);
+  }, [pathname, redirecting]);
+
+  if (!hydrated || redirecting) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -32,9 +41,12 @@ export default function LoginGate({ children }: { children: ReactNode }) {
     }
     setError(null);
     setValue('');
-    // Always land on the diary after logging in, regardless of which
-    // route triggered the gate.
-    router.push('/');
+    // Always land on the diary after logging in. Bridge the route
+    // transition with a loader so the previous page never flashes.
+    if (pathname !== '/') {
+      setRedirecting(true);
+      router.push('/');
+    }
   };
 
   return (

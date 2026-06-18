@@ -36,6 +36,12 @@ interface ChatBubbleProps {
   otherLastReadAt: string | null;
   onReply: (message: ChatMessageRich) => void;
   onJumpToMessage: (id: string) => void;
+  /**
+   * Optimistic patch into the parent's message list — used so the
+   * actor sees their delete reflect instantly instead of waiting for
+   * the Supabase realtime round-trip.
+   */
+  onMessagePatch?: (id: string, patch: Partial<ChatMessageRich>) => void;
 }
 
 export default function ChatBubble({
@@ -44,6 +50,7 @@ export default function ChatBubble({
   otherLastReadAt,
   onReply,
   onJumpToMessage,
+  onMessagePatch,
 }: ChatBubbleProps) {
   const { sender } = useSender();
   const { toast } = useToast();
@@ -53,6 +60,9 @@ export default function ChatBubble({
   const [editFormat, setEditFormat] = useState<ContentFormat>(message.format);
   const [busy, setBusy] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  // The emoji of *my* reaction the user is currently editing (the popover
+  // is anchored to that pill).
+  const [editingEmoji, setEditingEmoji] = useState<string | null>(null);
 
   const isMine = message.sender === sender;
   const isNoah = message.sender === 'Noah';
@@ -91,6 +101,47 @@ export default function ChatBubble({
     setShowReactions(false);
   };
 
+  // Change one of my own reactions to a different emoji (or remove it
+  // when the picked emoji matches what's already there). Picking an
+  // emoji I have *elsewhere* on this message just collapses the two
+  // into one (delete the edited row).
+  const changeMyReaction = async (oldEmoji: string, newEmoji: string) => {
+    setEditingEmoji(null);
+    if (oldEmoji === newEmoji) {
+      const mine = message.chat_reactions.find(
+        (r) => r.sender === sender && r.emoji === oldEmoji
+      );
+      if (mine) await supabase.from('chat_reactions').delete().eq('id', mine.id);
+      return;
+    }
+    const mine = message.chat_reactions.find(
+      (r) => r.sender === sender && r.emoji === oldEmoji
+    );
+    if (!mine) return;
+    const conflict = message.chat_reactions.some(
+      (r) => r.sender === sender && r.emoji === newEmoji
+    );
+    if (conflict) {
+      await supabase.from('chat_reactions').delete().eq('id', mine.id);
+      return;
+    }
+    const { error } = await supabase
+      .from('chat_reactions')
+      .update({ emoji: newEmoji })
+      .eq('id', mine.id);
+    if (error)
+      toast({ title: 'Could not change reaction', description: error.message, variant: 'destructive' });
+  };
+
+  const onPillClick = (emoji: string, byMe: boolean) => {
+    if (byMe) {
+      setEditingEmoji((cur) => (cur === emoji ? null : emoji));
+    } else {
+      // Joining someone else's reaction adds mine with the same emoji.
+      void toggleReaction(emoji);
+    }
+  };
+
   const saveEdit = async () => {
     if (busy) return;
     setBusy(true);
@@ -112,16 +163,23 @@ export default function ChatBubble({
     setBusy(true);
     // Jelili's delete is a fake-out — only stamps delete_attempt_at, the
     // row stays alive. Noah's delete is a real soft-delete.
-    const patch =
-      sender === 'Jelili'
-        ? { delete_attempt_at: new Date().toISOString() }
-        : { deleted_at: new Date().toISOString() };
+    const nowIso = new Date().toISOString();
+    const patch: Partial<ChatMessageRich> =
+      sender === 'Jelili' ? { delete_attempt_at: nowIso } : { deleted_at: nowIso };
+
+    // Optimistic — don't wait for realtime to bounce the change back.
+    onMessagePatch?.(message.id, patch);
+
     const { error } = await supabase
       .from('chat_messages')
       .update(patch)
       .eq('id', message.id);
     setBusy(false);
     if (error) {
+      // Roll back the optimistic patch.
+      const rollback: Partial<ChatMessageRich> =
+        sender === 'Jelili' ? { delete_attempt_at: null } : { deleted_at: null };
+      onMessagePatch?.(message.id, rollback);
       toast({ title: 'Could not delete', description: error.message, variant: 'destructive' });
     }
   };
@@ -269,17 +327,40 @@ export default function ChatBubble({
       {grouped.length > 0 && !isDeleted && (
         <div className="flex flex-wrap gap-1 px-1">
           {grouped.map((g) => (
-            <button
-              key={g.emoji}
-              onClick={() => toggleReaction(g.emoji)}
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px]',
-                g.byMe ? 'bg-foreground/10 border-foreground/40' : 'bg-card border-border'
+            <div key={g.emoji} className="relative">
+              <button
+                type="button"
+                onClick={() => onPillClick(g.emoji, g.byMe)}
+                title={g.byMe ? 'Tap to change your reaction' : 'Tap to react with this too'}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] transition-colors',
+                  g.byMe
+                    ? 'bg-foreground/10 border-foreground/40 hover:bg-foreground/15'
+                    : 'bg-card border-border hover:bg-muted'
+                )}
+              >
+                <span>{g.emoji}</span>
+                <span className="font-code text-muted-foreground">{g.count}</span>
+              </button>
+              {editingEmoji === g.emoji && g.byMe && (
+                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-20 flex gap-0.5 rounded-full border border-border bg-card p-1 shadow-sm">
+                  {QUICK_REACTIONS.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => changeMyReaction(g.emoji, e)}
+                      title={e === g.emoji ? 'Remove' : `Change to ${e}`}
+                      className={cn(
+                        'h-7 w-7 inline-flex items-center justify-center rounded-full hover:bg-muted text-base',
+                        e === g.emoji && 'ring-1 ring-foreground/40'
+                      )}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              <span>{g.emoji}</span>
-              <span className="font-code text-muted-foreground">{g.count}</span>
-            </button>
+            </div>
           ))}
         </div>
       )}

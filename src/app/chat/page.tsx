@@ -240,6 +240,7 @@ export default function ChatPage() {
                         otherLastReadAt={otherLastReadAt}
                         onReply={(target) => setReplyTo(target)}
                         onJumpToMessage={onJumpToMessage}
+                        onMessagePatch={patchMessage}
                       />
                     </div>
                   );
