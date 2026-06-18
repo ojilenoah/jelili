@@ -202,56 +202,46 @@ export default function ChatBubble({
     otherLastReadAt !== null &&
     new Date(message.created_at).getTime() <= new Date(otherLastReadAt).getTime();
 
+  // One reaction per user per message. Tapping an emoji:
+  //   - no reaction yet      -> add it
+  //   - same emoji already   -> remove it
+  //   - different emoji      -> replace (UPDATE the existing row)
   const toggleReaction = async (emoji: string) => {
-    const existing = message.chat_reactions.find((r) => r.sender === sender && r.emoji === emoji);
-    if (existing) {
-      await supabase.from('chat_reactions').delete().eq('id', existing.id);
-    } else {
+    const mine = message.chat_reactions.find((r) => r.sender === sender);
+    if (!mine) {
       const { error } = await supabase
         .from('chat_reactions')
         .insert([{ message_id: message.id, sender, emoji }]);
       if (error)
         toast({ title: 'Could not react', description: error.message, variant: 'destructive' });
-    }
-  };
-
-  // Change one of my own reactions to a different emoji (or remove it
-  // when the picked emoji matches what's already there). Picking an
-  // emoji I have *elsewhere* on this message just collapses the two
-  // into one (delete the edited row).
-  const changeMyReaction = async (oldEmoji: string, newEmoji: string) => {
-    setEditingEmoji(null);
-    if (oldEmoji === newEmoji) {
-      const mine = message.chat_reactions.find(
-        (r) => r.sender === sender && r.emoji === oldEmoji
-      );
-      if (mine) await supabase.from('chat_reactions').delete().eq('id', mine.id);
       return;
     }
-    const mine = message.chat_reactions.find(
-      (r) => r.sender === sender && r.emoji === oldEmoji
-    );
-    if (!mine) return;
-    const conflict = message.chat_reactions.some(
-      (r) => r.sender === sender && r.emoji === newEmoji
-    );
-    if (conflict) {
+    if (mine.emoji === emoji) {
       await supabase.from('chat_reactions').delete().eq('id', mine.id);
       return;
     }
     const { error } = await supabase
       .from('chat_reactions')
-      .update({ emoji: newEmoji })
+      .update({ emoji })
       .eq('id', mine.id);
     if (error)
-      toast({ title: 'Could not change reaction', description: error.message, variant: 'destructive' });
+      toast({ title: 'Could not react', description: error.message, variant: 'destructive' });
+  };
+
+  // Wrapper that closes the inline pill picker after toggling.
+  const changeMyReaction = async (_oldEmoji: string, newEmoji: string) => {
+    setEditingEmoji(null);
+    await toggleReaction(newEmoji);
   };
 
   const onPillClick = (emoji: string, byMe: boolean) => {
     if (byMe) {
+      // Tapping my own pill opens the editor.
       setEditingEmoji((cur) => (cur === emoji ? null : emoji));
     } else {
-      // Joining someone else's reaction adds mine with the same emoji.
+      // Tapping the other person's pill: react with the same emoji
+      // (which, under the one-per-user rule, replaces mine if I had a
+      // different one).
       void toggleReaction(emoji);
     }
   };

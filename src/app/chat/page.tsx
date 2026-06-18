@@ -160,12 +160,27 @@ export default function ChatPage() {
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [loading, messages.length]);
 
-  // Mark the chat as read whenever the page is mounted or new messages
-  // arrive from the other side while we're here.
+  // Mark the chat as read — but ONLY when the tab is actually visible.
+  // Otherwise a hidden tab would silently bump last_read_at and make the
+  // sender think the other party has seen the message.
   useEffect(() => {
     if (loading) return;
+    if (typeof document === 'undefined') return;
+    if (document.visibilityState !== 'visible') return;
     void markRead();
   }, [loading, messages.length, markRead]);
+
+  // Catch the case where the user switches back to this tab after new
+  // messages already arrived (the messages.length effect won't fire).
+  useEffect(() => {
+    if (loading) return;
+    if (typeof document === 'undefined') return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void markRead();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [loading, markRead]);
 
   const messageMap = useMemo(() => {
     const m = new Map<string, ChatMessageRich>();

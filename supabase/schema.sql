@@ -134,7 +134,9 @@ create table if not exists chat_reactions (
   sender      sender_name not null,
   emoji       text not null,
   created_at  timestamptz not null default now(),
-  unique (message_id, sender, emoji)
+  -- One reaction per sender per message; reacting with a different
+  -- emoji UPDATEs this row instead of inserting a second.
+  unique (message_id, sender)
 );
 
 create index if not exists chat_reactions_message_idx
